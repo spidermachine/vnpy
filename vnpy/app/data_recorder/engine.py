@@ -10,6 +10,7 @@ from vnpy.trader.object import (
     SubscribeRequest,
     TickData,
     BarData,
+    RiskTick,
     ContractData
 )
 from vnpy.trader.event import EVENT_TICK, EVENT_CONTRACT
@@ -69,6 +70,8 @@ class RecorderEngine(BaseEngine):
                     database_manager.save_tick_data([data])
                 elif task_type == "bar":
                     database_manager.save_bar_data([data])
+                elif task_type == "risk":
+                    database_manager.save_risk_data([data])
 
             except Empty:
                 continue
@@ -164,12 +167,15 @@ class RecorderEngine(BaseEngine):
         """"""
         tick = event.data
 
-        if tick.vt_symbol in self.tick_recordings:
+        # if tick.vt_symbol in self.tick_recordings:
+        if tick.gateway_name == "risk":
+            self.record_risk(tick)
+        else:
             self.record_tick(tick)
 
-        if tick.vt_symbol in self.bar_recordings:
-            bg = self.get_bar_generator(tick.vt_symbol)
-            bg.update_tick(tick)
+        # if tick.vt_symbol in self.bar_recordings:
+        # bg = self.get_bar_generator(tick.vt_symbol)
+        # bg.update_tick(tick)
 
     def process_contract_event(self, event: Event):
         """"""
@@ -209,6 +215,11 @@ class RecorderEngine(BaseEngine):
     def record_tick(self, tick: TickData):
         """"""
         task = ("tick", copy(tick))
+        self.queue.put(task)
+
+    def record_risk(self, risk: RiskTick):
+
+        task = ("risk", copy(risk))
         self.queue.put(task)
 
     def record_bar(self, bar: BarData):

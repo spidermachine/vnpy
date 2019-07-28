@@ -12,6 +12,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from vnpy.event import EventEngine
 from .widget import (
     TickMonitor,
+    RiskMonitor,
     OrderMonitor,
     TradeMonitor,
     PositionMonitor,
@@ -50,7 +51,7 @@ class MainWindow(QtWidgets.QMainWindow):
         """"""
         self.setWindowTitle(self.window_title)
         self.init_dock()
-        self.init_toolbar()
+        # self.init_toolbar()
         self.init_menu()
         self.load_window_setting("custom")
 
@@ -62,26 +63,30 @@ class MainWindow(QtWidgets.QMainWindow):
         tick_widget, tick_dock = self.create_dock(
             TickMonitor, "行情", QtCore.Qt.RightDockWidgetArea
         )
-        order_widget, order_dock = self.create_dock(
-            OrderMonitor, "委托", QtCore.Qt.RightDockWidgetArea
-        )
-        active_widget, active_dock = self.create_dock(
-            ActiveOrderMonitor, "活动", QtCore.Qt.RightDockWidgetArea
-        )
-        trade_widget, trade_dock = self.create_dock(
-            TradeMonitor, "成交", QtCore.Qt.RightDockWidgetArea
-        )
-        log_widget, log_dock = self.create_dock(
-            LogMonitor, "日志", QtCore.Qt.BottomDockWidgetArea
-        )
-        account_widget, account_dock = self.create_dock(
-            AccountMonitor, "资金", QtCore.Qt.BottomDockWidgetArea
-        )
-        position_widget, position_dock = self.create_dock(
-            PositionMonitor, "持仓", QtCore.Qt.BottomDockWidgetArea
+        tick_widget, tick_dock = self.create_dock(
+            RiskMonitor, "风险", QtCore.Qt.RightDockWidgetArea
         )
 
-        self.tabifyDockWidget(active_dock, order_dock)
+        # order_widget, order_dock = self.create_dock(
+        #     OrderMonitor, "委托", QtCore.Qt.RightDockWidgetArea
+        # )
+        # active_widget, active_dock = self.create_dock(
+        #     ActiveOrderMonitor, "活动", QtCore.Qt.RightDockWidgetArea
+        # )
+        # trade_widget, trade_dock = self.create_dock(
+        #     TradeMonitor, "成交", QtCore.Qt.RightDockWidgetArea
+        # )
+        # log_widget, log_dock = self.create_dock(
+        #     LogMonitor, "日志", QtCore.Qt.BottomDockWidgetArea
+        # )
+        # account_widget, account_dock = self.create_dock(
+        #     AccountMonitor, "资金", QtCore.Qt.BottomDockWidgetArea
+        # )
+        # position_widget, position_dock = self.create_dock(
+        #     PositionMonitor, "持仓", QtCore.Qt.BottomDockWidgetArea
+        # )
+
+        # self.tabifyDockWidget(active_dock, order_dock)
 
         self.save_window_setting("default")
 
@@ -200,13 +205,13 @@ class MainWindow(QtWidgets.QMainWindow):
         func: Callable,
     ):
         """"""
-        icon = QtGui.QIcon(get_icon_path(__file__, icon_name))
-
-        action = QtWidgets.QAction(action_name, self)
-        action.triggered.connect(func)
-        action.setIcon(icon)
-
-        self.toolbar.addAction(action)
+        # icon = QtGui.QIcon(get_icon_path(__file__, icon_name))
+        #
+        # action = QtWidgets.QAction(action_name, self)
+        # action.triggered.connect(func)
+        # action.setIcon(icon)
+        #
+        # self.toolbar.addAction(action)
 
     def create_dock(
         self, widget_class: QtWidgets.QWidget, name: str, area: int

@@ -12,7 +12,6 @@ class Driver(Enum):
     SQLITE = "sqlite"
     MYSQL = "mysql"
     POSTGRESQL = "postgresql"
-    MONGODB = "mongodb"
 
 
 class BaseDatabaseManager(ABC):
@@ -50,6 +49,10 @@ class BaseDatabaseManager(ABC):
         self,
         datas: Sequence["TickData"],
     ):
+        pass
+
+    @abstractmethod
+    def save_risk_data(self, datas: Sequence["RiskTick"]):
         pass
 
     @abstractmethod

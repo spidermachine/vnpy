@@ -16,7 +16,7 @@ from peewee import (
 )
 
 from vnpy.trader.constant import Exchange, Interval
-from vnpy.trader.object import BarData, TickData
+from vnpy.trader.object import BarData, TickData, RiskTick
 from vnpy.trader.utility import get_file_path
 from .database import BaseDatabaseManager, Driver
 
@@ -30,8 +30,8 @@ def init(driver: Driver, settings: dict):
     assert driver in init_funcs
 
     db = init_funcs[driver](settings)
-    bar, tick = init_models(db, driver)
-    return SqlManager(bar, tick)
+    bar, tick, risk = init_models(db, driver)
+    return SqlManager(bar, tick, risk)
 
 
 def init_sqlite(settings: dict):
@@ -319,16 +319,97 @@ def init_models(db: Database, driver: Driver):
                     for c in chunked(dicts, 50):
                         DbTickData.insert_many(c).on_conflict_replace().execute()
 
+    class DbRiskData(DbTickData):
+
+        delta = FloatField()
+        gamma = FloatField()
+        theta = FloatField()
+        vega = FloatField()
+        hide_wave = FloatField()
+        theory = FloatField()
+        exe_price = FloatField()
+
+        bid_price_1 = FloatField(True)
+        bid_volume_1 = FloatField(True)
+        ask_price_1 = FloatField(True)
+        ask_volume_1 = FloatField(True)
+
+        def to_tick(self):
+
+            tick = RiskTick()
+            tick.name = self.name
+            tick.delta = self.delta
+            tick.gamma = self.gamma
+            tick.theta= self.theta
+            tick.vega = self.vega
+            tick.hide_wave = self.hide_wave
+            tick.theory = self.theory
+            tick.exe_price = self.exe_price
+
+            tick.symbol = self.symbol
+            tick.exchange = Exchange(self.exchange)
+            tick.datetime = self.datetime
+            tick.last_price = self.last_price
+            tick.high_price = self.high_price
+            tick.low_price = self.low_price
+            tick.gateway_name = 'DB'
+            return tick
+
+        @staticmethod
+        def from_tick(tick):
+            db_tick = DbRiskData()
+
+            db_tick.symbol = tick.symbol
+            db_tick.exchange = tick.exchange.value
+            db_tick.datetime = tick.datetime
+            db_tick.name = tick.name
+            db_tick.volume = tick.volume
+            db_tick.open_interest = tick.open_interest
+            db_tick.last_price = tick.last_price
+            db_tick.last_volume = tick.last_volume
+            db_tick.limit_up = tick.limit_up
+            db_tick.limit_down = tick.limit_down
+            db_tick.open_price = tick.open_price
+            db_tick.high_price = tick.high_price
+            db_tick.low_price = tick.low_price
+            db_tick.pre_close = tick.pre_close
+            db_tick.delta = tick.delta
+            db_tick.gamma = tick.gamma
+            db_tick.theta = tick.theta
+            db_tick.vega = tick.vega
+            db_tick.hide_wave = tick.hide_wave
+            db_tick.theory = tick.theory
+            db_tick.exe_price = tick.exe_price
+            return db_tick
+
+        @staticmethod
+        def save_all(objs: List["DbTickData"]):
+            dicts = [i.to_dict() for i in objs]
+            with db.atomic():
+                if driver is Driver.POSTGRESQL:
+                    for tick in dicts:
+                        DbTickData.insert(tick).on_conflict(
+                            update=tick,
+                            conflict_target=(
+                                DbTickData.symbol,
+                                DbTickData.exchange,
+                                DbTickData.datetime,
+                            ),
+                        ).execute()
+                else:
+                    for c in chunked(dicts, 50):
+                        DbRiskData.insert_many(c).on_conflict_replace().execute()
     db.connect()
-    db.create_tables([DbBarData, DbTickData])
-    return DbBarData, DbTickData
+    db.create_tables([DbBarData, DbTickData, DbRiskData])
+    return DbBarData, DbTickData, DbRiskData
 
 
 class SqlManager(BaseDatabaseManager):
 
-    def __init__(self, class_bar: Type[Model], class_tick: Type[Model]):
+    def __init__(self, class_bar: Type[Model], class_tick: Type[Model], class_risk: Type[Model]):
         self.class_bar = class_bar
         self.class_tick = class_tick
+        self.class_risk = class_risk
 
     def load_bar_data(
         self,
@@ -376,6 +457,10 @@ class SqlManager(BaseDatabaseManager):
     def save_tick_data(self, datas: Sequence[TickData]):
         ds = [self.class_tick.from_tick(i) for i in datas]
         self.class_tick.save_all(ds)
+
+    def save_risk_data(self, datas: Sequence[RiskTick]):
+        ds = [self.class_risk.from_tick(i) for i in datas]
+        self.class_risk.save_all(ds)
 
     def get_newest_bar_data(
         self, symbol: str, exchange: "Exchange", interval: "Interval"

@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-bash ./install.sh python3 /usr/local
+bash ./install.sh /Users/zkp/anaconda3/bin/python3 /usr/local

@@ -1,28 +1,26 @@
 # encoding: UTF-8
-from vnpy.trader.vtGateway import *
-from vnpy.trader.vtFunction import getJsonPath
+from vnpy.trader.gateway import *
+from vnpy.trader.object import TickData, OptionTick, RiskTick
+from vnpy.trader.constant import Exchange
 from vnpy.api.sina.qq import sinaqq
 from vnpy.api.sina.stock import sinastock
-import json
 import datetime
 import threading
-from .optionData import OptionTick, RiskTick
+import time
+from vnpy.trader.setting import SETTINGS
 
-
-class SinaqqMdGateway(VtGateway):
+class SinaqqMdGateway(BaseGateway):
     """
     market data
     """
-    def __init__(self, eventEngine, gatewayName='Sinaqqmd'):
+    def __init__(self, event_engine, gateway_name='sinaqq'):
         """Constructor"""
-        super(SinaqqMdGateway, self).__init__(eventEngine, gatewayName)
+        super(SinaqqMdGateway, self).__init__(event_engine, gateway_name)
 
-        self.fileName = self.gatewayName + '_connect.json'
-        self.filePath = getJsonPath(self.fileName, __file__)
         self.api = sinaqq
         self.opCodes = list()
         self.isRunning = False
-        self.settings = None
+        self.settings = SETTINGS
         self.routine = None
 
     def update_tick(self):
@@ -31,91 +29,75 @@ class SinaqqMdGateway(VtGateway):
         :return:
         """
         interval = 5
-        if 'interval' in self.settings:
-            interval = self.settings['interval']
+        if 'sinaqq.interval' in self.settings:
+            interval = self.settings['sinaqq.interval']
         while self.isRunning:
-            cur = datetime.datetime().now()
+            cur = datetime.datetime.now()
             if cur.second % interval == 0:
                 data = self.get_tick_data()
                 for item in data:
-                    self.onTick(item)
+                    self.on_tick(item)
             time.sleep(1)
 
     def get_tick_data(self):
         data = sinaqq.get_op_price_batch(self.opCodes)
         vlist = list()
         now = datetime.datetime.now()
-        # date_str = now.strftime('%Y%m%d')
-        # time_str = now.strftime('%H:%M:%S')
         for item in data:
             tick = OptionTick()
             tick.symbol = item[0]
-            tick.gatewayName = self.gatewayName
-            tick.exchange = ''
-            tick.vtSymbol = tick.exchange + tick.symbol
+            tick.gateway_name = self.gateway_name
+            tick.exchange = Exchange.SHFE
+            tick.vt_symbol = tick.symbol + "." + tick.exchange.value
             tick.date = item[1][32][:10]
             tick.time = item[1][32][11:]
             tick.datetime = now
 
-            tick.buyVolume = item[1][0]
-            tick.buyPrice = item[1][1]
-            tick.lastPrice = item[1][2]
-            tick.sellPrice = item[1][3]
-            tick.sellVolume = item[1][4]
-            tick.openInterest = item[1][5]
-            tick.rise = item[1][6]
-            tick.exePrice = item[1][7]
+            tick.buy_volume = int(item[1][0])
+            tick.buy_price = float(item[1][1])
+            tick.last_price = float(item[1][2])
+            tick.sell_price = float(item[1][3])
+            tick.sell_volume = int(item[1][4])
+            tick.open_interest = int(item[1][5])
+            tick.rise = float(item[1][6])
+            tick.exe_price = float(item[1][7])
 
-            tick.preClosePrice = item[1][8]
-            tick.openPrice = item[1][9]
-            tick.lastPrice = item[1][3]
+            tick.pre_close = float(item[1][8])
+            tick.open_price = float(item[1][9])
+            tick.last_price = float(item[1][3])
 
-            tick.askPrice5 = item[1][12]
-            tick.askVolume5 = item[1][13]
-            tick.askPrice4 = item[1][14]
-            tick.askVolume4 = item[1][15]
-            tick.askPrice3 = item[1][16]
-            tick.askVolume3 = item[1][17]
-            tick.askPrice2 = item[1][18]
-            tick.askVolume2 = item[1][19]
-            tick.askPrice1 = item[1][20]
-            tick.askVolume1 = item[1][21]
+            tick.ask_price_5 = float(item[1][12])
+            tick.ask_volume_5 = int(item[1][13])
+            tick.ask_price_4 = float(item[1][14])
+            tick.ask_volume_4 = int(item[1][15])
+            tick.ask_price_3 = float(item[1][16])
+            tick.ask_volume_3 = int(item[1][17])
+            tick.ask_price_2 = float(item[1][18])
+            tick.ask_volume_2 = int(item[1][19])
+            tick.ask_price_1 = float(item[1][20])
+            tick.ask_volume_1 = int(item[1][21])
 
-            tick.bidVolume1 = item[1][22]
-            tick.bidPrice1 = item[1][23]
-            tick.bidVolume2 = item[1][24]
-            tick.bidPrice2 = item[1][25]
-            tick.bidVolume3 = item[1][26]
-            tick.bidPrice3 = item[1][27]
-            tick.bidVolume4 = item[1][28]
-            tick.bidPrice4 = item[1][29]
-            tick.bidVolume5 = item[1][30]
-            tick.bidPrice5 = item[1][31]
+            tick.bid_price_1 = float(item[1][22])
+            tick.bid_volume_1 = int(item[1][23])
+            tick.bid_price_2 = float(item[1][24])
+            tick.bid_volume_2 = int(item[1][25])
+            tick.bid_price_3 = float(item[1][26])
+            tick.bid_volume_3 = int(item[1][27])
+            tick.bid_price_4 = float(item[1][28])
+            tick.bid_volume_4 = int(item[1][29])
+            tick.bid_price_5 = float(item[1][30])
+            tick.bid_volume_5 = int(item[1][31])
 
             tick.under = item[1][36]
             tick.name = item[1][37]
             tick.amp = item[1][38]
-            tick.highPrice = item[1][39]
-            tick.lowPrice = item[1][40]
-            tick.volume = item[1][41]
+            tick.high_price = float(item[1][39])
+            tick.low_price = float(item[1][40])
+            tick.volume = int(item[1][41])
             vlist.append(tick)
         return vlist
 
-    
-    def connect(self):
-
-        try:
-            f = open(self.filePath)
-        except IOError:
-            log = VtLogData()
-            log.gatewayName = self.gatewayName
-            log.logContent = u'读取连接配置出错，请检查'
-            self.onLog(log)
-            return
-
-        # 解析json文件
-        self.settings = json.load(f)
-        f.close()
+    def connect(self, settings):
 
         if len(self.opCodes) == 0:
             dates = sinaqq.get_op_dates()
@@ -130,33 +112,54 @@ class SinaqqMdGateway(VtGateway):
     def close(self):
         self.isRunning = False
 
+    def cancel_order(self, req: CancelRequest):
+        pass
+
+    def query_account(self):
+        pass
+
+    def query_position(self):
+        pass
+
+    def send_order(self, req: OrderRequest):
+        pass
+
+    def subscribe(self, req: SubscribeRequest):
+        pass
+
 
 class SinaRiskGateway(SinaqqMdGateway):
     """
     risk data
     """
-    def __init__(self, eventEngine, gatewayName='Sinaqqmd'):
+    def __init__(self, event_engine):
         """Constructor"""
-        super(SinaRiskGateway, self).__init__(eventEngine, gatewayName)
+        super(SinaRiskGateway, self).__init__(event_engine, 'risk')
 
     def get_tick_data(self):
         data = sinaqq.get_op_greek_alphabet_batch(self.opCodes)
         vlist = list()
+        now = datetime.datetime.now()
         for item in data:
-            risk = RiskTick()
+            risk = RiskTick(self.gateway_name, item[0], Exchange.SHFE, now)
+            risk.gateway_name = self.gateway_name
+            risk.exchange = Exchange.SHFE
+            risk.symbol = item[0]
+            risk.datetime = now
+            risk.vt_symbol = risk.symbol + "." + Exchange.SHFE.value
             risk.name = item[1][0]
-            risk.volume = item[1][1]
-            risk.delta = item[1][2]
-            risk.gamma = item[1][3]
-            risk.theta = item[1][4]
-            risk.vega = item[1][5]
-            risk.hideWave = item[1][6]
-            risk.highPrice = item[1][7]
-            risk.lowPrice = item[1][8]
+            risk.volume = int(item[1][1])
+            risk.delta = float(item[1][2])
+            risk.gamma = float(item[1][3])
+            risk.theta = float(item[1][4])
+            risk.vega = float(item[1][5])
+            risk.hide_wave = float(item[1][6])
+            risk.high_price = float(item[1][7])
+            risk.low_price = float(item[1][8])
             risk.symbol = item[1][9]
-            risk.exePrice = item[1][10]
-            risk.lastPrice = item[1][11]
-            risk.theory = item[1][12]
+            risk.exe_price = float(item[1][10])
+            risk.last_price = float(item[1][11])
+            risk.theory = float(item[1][12])
             vlist.append(risk)
         return vlist
 
@@ -165,55 +168,57 @@ class SinaStockGateway(SinaqqMdGateway):
     """
     股票etf接口
     """
-    def __init__(self, eventEngine, gatewayName='Sinaqqmd'):
+    def __init__(self, event_engine):
         """Constructor"""
-        super(SinaStockGateway, self).__init__(eventEngine, gatewayName)
+        super(SinaStockGateway, self).__init__(event_engine, 'sinastock')
 
-    def connect(self):
-        pass
+    def connect(self, settings):
+        self.isRunning = True
+        self.routine = threading.Thread(target=self.update_tick)
+        self.routine.start()
 
-    def subscribe(self, subscribeReq):
-        self.opCodes.append()
+    def subscribe(self, req: SubscribeRequest):
+        self.opCodes.append(req.symbol)
 
     def get_tick_data(self):
         data = sinastock.get_stock_price(self.opCodes)
         vlist = list()
         for item in data:
-            tick = VtTickData()
+            tick = TickData()
             tick.symbol = item[0]
-            tick.gatewayName = self.gatewayName
-            tick.exchange = item[0][:2]
-            tick.vtSymbol = tick.exchange + tick.symbol
+            tick.gateway_name = self.gateway_name
+            tick.exchange = Exchange.SSE # item[0][:2]
+            tick.vt_symbol = tick.symbol + "." + tick.exchange.value
             tick.date = item[1][30]
             tick.time = item[1][31]
             tick.datetime = datetime.datetime.now()
-            tick.openPrice = item[1][1]
-            tick.preClosePrice = item[1][2]
-            tick.lastPrice = item[1][3]
-            tick.highPrice = item[1][4]
-            tick.lowPrice = item[1][5]
-            tick.volume = item[1][8]
+            tick.open_price = float(item[1][1])
+            tick.pre_close = float(item[1][2])
+            tick.last_price = float(item[1][3])
+            tick.high_price = float(item[1][4])
+            tick.low_price = float(item[1][5])
+            tick.volume = int(item[1][8])
 
-            tick.askVolume1 = item[1][10]
-            tick.askPrice1 = item[1][11]
-            tick.askVolume2 = item[1][12]
-            tick.askPrice2 = item[1][13]
-            tick.askVolume3 = item[1][14]
-            tick.askPrice3 = item[1][15]
-            tick.askVolume4 = item[1][16]
-            tick.askPrice4 = item[1][17]
-            tick.askVolume5 = item[1][18]
-            tick.askPrice5 = item[1][19]
+            tick.ask_volume_1 = int(item[1][10])
+            tick.ask_price_1 = float(item[1][11])
+            tick.ask_volume_2 = int(item[1][12])
+            tick.ask_price_2 = float(item[1][13])
+            tick.ask_volume_3 = int(item[1][14])
+            tick.ask_price_3 = float(item[1][15])
+            tick.ask_volume_4 = int(item[1][16])
+            tick.ask_price_4 = float(item[1][17])
+            tick.ask_volume_5 = int(item[1][18])
+            tick.ask_price_5 = float(item[1][19])
 
-            tick.bidVolume1= item[1][20]
-            tick.bidPrice1 = item[1][21]
-            tick.bidVolume2 = item[1][22]
-            tick.bidPrice2 = item[1][23]
-            tick.bidVolume3 = item[1][24]
-            tick.bidPrice3 = item[1][25]
-            tick.bidVolume4 = item[1][26]
-            tick.bidPrice4 = item[1][27]
-            tick.bidVolume5 = item[1][28]
-            tick.bidPrice5 = item[1][29]
+            tick.bid_volume_1 = int(item[1][20])
+            tick.bid_price_1 = float(item[1][21])
+            tick.bid_volume_2 = int(item[1][22])
+            tick.bid_price_2 = float(item[1][23])
+            tick.bid_volume_3 = int(item[1][24])
+            tick.bid_price_3 = float(item[1][25])
+            tick.bid_volume_4 = int(item[1][26])
+            tick.bid_price_4 = float(item[1][27])
+            tick.bid_volume_5 = int(item[1][28])
+            tick.bid_price_5 = float(item[1][29])
             vlist.append(tick)
         return vlist

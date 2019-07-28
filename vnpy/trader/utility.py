@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Callable
 
 import numpy as np
-import talib
 
 from .object import BarData, TickData
 from .constant import Exchange, Interval
@@ -339,106 +338,6 @@ class ArrayManager(object):
         Get trading volume time series.
         """
         return self.volume_array
-
-    def sma(self, n, array=False):
-        """
-        Simple moving average.
-        """
-        result = talib.SMA(self.close, n)
-        if array:
-            return result
-        return result[-1]
-
-    def std(self, n, array=False):
-        """
-        Standard deviation
-        """
-        result = talib.STDDEV(self.close, n)
-        if array:
-            return result
-        return result[-1]
-
-    def cci(self, n, array=False):
-        """
-        Commodity Channel Index (CCI).
-        """
-        result = talib.CCI(self.high, self.low, self.close, n)
-        if array:
-            return result
-        return result[-1]
-
-    def atr(self, n, array=False):
-        """
-        Average True Range (ATR).
-        """
-        result = talib.ATR(self.high, self.low, self.close, n)
-        if array:
-            return result
-        return result[-1]
-
-    def rsi(self, n, array=False):
-        """
-        Relative Strenght Index (RSI).
-        """
-        result = talib.RSI(self.close, n)
-        if array:
-            return result
-        return result[-1]
-
-    def macd(self, fast_period, slow_period, signal_period, array=False):
-        """
-        MACD.
-        """
-        macd, signal, hist = talib.MACD(
-            self.close, fast_period, slow_period, signal_period
-        )
-        if array:
-            return macd, signal, hist
-        return macd[-1], signal[-1], hist[-1]
-
-    def adx(self, n, array=False):
-        """
-        ADX.
-        """
-        result = talib.ADX(self.high, self.low, self.close, n)
-        if array:
-            return result
-        return result[-1]
-
-    def boll(self, n, dev, array=False):
-        """
-        Bollinger Channel.
-        """
-        mid = self.sma(n, array)
-        std = self.std(n, array)
-
-        up = mid + std * dev
-        down = mid - std * dev
-
-        return up, down
-
-    def keltner(self, n, dev, array=False):
-        """
-        Keltner Channel.
-        """
-        mid = self.sma(n, array)
-        atr = self.atr(n, array)
-
-        up = mid + atr * dev
-        down = mid - atr * dev
-
-        return up, down
-
-    def donchian(self, n, array=False):
-        """
-        Donchian Channel.
-        """
-        up = talib.MAX(self.high, n)
-        down = talib.MIN(self.low, n)
-
-        if array:
-            return up, down
-        return up[-1], down[-1]
 
 
 def virtual(func: "callable"):

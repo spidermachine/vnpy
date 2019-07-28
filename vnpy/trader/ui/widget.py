@@ -362,6 +362,85 @@ class TickMonitor(BaseMonitor):
         "gateway_name": {"display": "接口", "cell": BaseCell, "update": False},
     }
 
+    def process_event(self, event):
+        """
+        Process new data from event and update into table.
+        """
+        # Disable sorting to prevent unwanted error.
+        if self.sorting:
+            self.setSortingEnabled(False)
+
+        # Update data into table.
+        data = event.data
+
+        if data.gateway_name == 'risk':
+            return
+
+        if not self.data_key:
+            self.insert_new_row(data)
+        else:
+            key = data.__getattribute__(self.data_key)
+
+            if key in self.cells:
+                self.update_old_row(data)
+            else:
+                self.insert_new_row(data)
+
+        # Enable sorting
+        if self.sorting:
+            self.setSortingEnabled(True)
+
+class RiskMonitor(BaseMonitor):
+    event_type = EVENT_TICK
+    data_key = "vt_symbol"
+    sorting = True
+
+    headers = {
+        "symbol": {"display": "代码", "cell": BaseCell, "update": False},
+        "exchange": {"display": "交易所", "cell": EnumCell, "update": False},
+        "name": {"display": "名称", "cell": BaseCell, "update": True},
+        "last_price": {"display": "最新价", "cell": BaseCell, "update": True},
+        "theory": {"display": "理论价值", "cell": BaseCell, "update": True},
+        "delta": {"display": "delta", "cell": BaseCell, "update": True},
+        "gamma": {"display": "gamma", "cell": BaseCell, "update": True},
+        "vega": {"display": "vega", "cell": BaseCell, "update": True},
+        "theta": {"display": "theta", "cell": BaseCell, "update": True},
+        "hide_wave": {"display": "隐含波动率", "cell": BaseCell, "update": True},
+        "exe_price": {"display": "行权价", "cell": BaseCell, "update": True},
+        "volume": {"display": "成交量", "cell": BaseCell, "update": True},
+        "high_price": {"display": "最高价", "cell": BaseCell, "update": True},
+        "low_price": {"display": "最低价", "cell": BaseCell, "update": True},
+        "datetime": {"display": "时间", "cell": TimeCell, "update": True},
+        "gateway_name": {"display": "接口", "cell": BaseCell, "update": False},
+    }
+
+    def process_event(self, event):
+        """
+        Process new data from event and update into table.
+        """
+        # Disable sorting to prevent unwanted error.
+        if self.sorting:
+            self.setSortingEnabled(False)
+
+        # Update data into table.
+        data = event.data
+
+        if data.gateway_name != 'risk':
+            return
+
+        if not self.data_key:
+            self.insert_new_row(data)
+        else:
+            key = data.__getattribute__(self.data_key)
+
+            if key in self.cells:
+                self.update_old_row(data)
+            else:
+                self.insert_new_row(data)
+
+        # Enable sorting
+        if self.sorting:
+            self.setSortingEnabled(True)
 
 class LogMonitor(BaseMonitor):
     """

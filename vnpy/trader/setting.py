@@ -22,15 +22,14 @@ SETTINGS = {
     "email.sender": "",
     "email.receiver": "",
 
-    "rqdata.username": "",
-    "rqdata.password": "",
+    "sinaqq.interval": 15,
 
-    "database.driver": "sqlite",  # see database.Driver
-    "database.database": "database.db",  # for sqlite, use this as filepath
-    "database.host": "localhost",
+    "database.driver": "mysql",  # see database.Driver
+    "database.database": "stock",  # for sqlite, use this as filepath
+    "database.host": "192.168.68.128",
     "database.port": 3306,
     "database.user": "root",
-    "database.password": "",
+    "database.password": "root",
     "database.authentication_source": "admin",  # for mongodb
 }
 
