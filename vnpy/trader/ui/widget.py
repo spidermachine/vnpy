@@ -22,7 +22,7 @@ from ..event import (
 )
 from ..object import OrderRequest, SubscribeRequest
 from ..utility import load_json, save_json
-from ..setting import SETTING_FILENAME, SETTINGS
+from ..setting import SETTING_FILENAME, SETTINGS, get_settings
 
 
 COLOR_LONG = QtGui.QColor("red")
@@ -943,6 +943,49 @@ class TradingWidget(QtWidgets.QWidget):
             self.main_engine.cancel_order(req, order.gateway_name)
 
 
+class HedgeLinesWidget(TradingWidget):
+
+    def __init__(self, main_engine: MainEngine, event_engine: EventEngine):
+        self.qq_tick = None
+        self.etf = None
+        self.qq = None
+        self.line = None
+        self.data = []
+        super(HedgeLinesWidget, self).__init__(main_engine, event_engine)
+
+    def init_ui(self):
+        import pyqtgraph as pg
+        plotWidget = pg.plot(title="对冲实时收益当天(相对昨天收盘)")
+        mainLayout = QtWidgets.QVBoxLayout()
+        mainLayout.addWidget(plotWidget, stretch=1)
+        self.line = plotWidget.getPlotItem().plot()
+        plotWidget.setCentralItem(self.line)
+        # plotWidget.setCentralWidget(self.line)
+        # tick_data = event.data
+        # if tick_data.gateway_name == 'sinaqq':
+
+
+        # self.line.setData(self.data)
+
+    def process_tick_event(self, event: Event):
+
+        ldata = event.data
+        hedge = get_settings("hedge")
+        etf = hedge.get(".etf")
+        etfsize = hedge.get(".etfsize")
+        qqcode = hedge.get(".qqcode")
+        qqcodesize = hedge.get(".qqcodesize")
+        if ldata.symbol == etf:
+            self.etf = ldata
+        elif ldata.symbol.endswith(qqcode):
+            self.qq = ldata
+
+        if self.etf and self.qq:
+            if self.etf.datetime.second == self.qq.datetime.second:
+                self.data.append(etfsize * (self.etf.last_price - self.etf.pre_close)
+                                 - qqcodesize * (self.qq.last_price - self.qq.pre_close))
+                self.line.setData(self.data)
+
 class ActiveOrderMonitor(OrderMonitor):
     """
     Monitor which shows active order only.
@@ -1152,3 +1195,4 @@ class GlobalDialog(QtWidgets.QDialog):
 
         save_json(SETTING_FILENAME, settings)
         self.accept()
+

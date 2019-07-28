@@ -13,6 +13,7 @@ from vnpy.event import EventEngine
 from .widget import (
     TickMonitor,
     RiskMonitor,
+    HedgeLinesWidget,
     OrderMonitor,
     TradeMonitor,
     PositionMonitor,
@@ -58,7 +59,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def init_dock(self):
         """"""
         self.trading_widget, trading_dock = self.create_dock(
-            TradingWidget, "交易", QtCore.Qt.LeftDockWidgetArea
+            HedgeLinesWidget, "交易", QtCore.Qt.LeftDockWidgetArea
         )
         tick_widget, tick_dock = self.create_dock(
             TickMonitor, "行情", QtCore.Qt.RightDockWidgetArea

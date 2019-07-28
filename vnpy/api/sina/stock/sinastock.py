@@ -6,7 +6,14 @@ from requests import get
 def get_stock_price(codes):
     url = "http://hq.sinajs.cn/list={}".format(','.join(codes))
     data = get(url).content.decode('gbk')
-    data = data[data.find('"') + 1: data.rfind('"')].split(',')
+    # data = data[data.find('"') + 1: data.rfind('"')].split(',')
+    data = data.split('\n')
+    vlist = list()
+    for item in data:
+        if len(item) == 0:
+            continue
+        ldata = item[item.find('"') + 1: item.rfind('"')].split(',')
+        vlist.append(ldata)
     # fields = ['股票名字', '今日开盘价', '昨日收盘价',
     # '当前价格', '今日最高价', '今日最低价',
     # '竞买价', '竞卖价', '成交的股票数',
@@ -17,4 +24,4 @@ def get_stock_price(codes):
     #           '卖一价', '卖二量', '卖二价',
     #           '卖三量', '卖三价', '卖四量',
     #           '卖四价','卖五量', '卖五价', '日期', '时间']
-    return zip(codes, data)
+    return zip(codes, vlist)

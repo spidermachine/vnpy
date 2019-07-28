@@ -173,6 +173,7 @@ class SinaStockGateway(SinaqqMdGateway):
         super(SinaStockGateway, self).__init__(event_engine, 'sinastock')
 
     def connect(self, settings):
+        self.opCodes.append("sh510050")
         self.isRunning = True
         self.routine = threading.Thread(target=self.update_tick)
         self.routine.start()
@@ -183,15 +184,12 @@ class SinaStockGateway(SinaqqMdGateway):
     def get_tick_data(self):
         data = sinastock.get_stock_price(self.opCodes)
         vlist = list()
+        now = datetime.datetime.now()
         for item in data:
-            tick = TickData()
-            tick.symbol = item[0]
-            tick.gateway_name = self.gateway_name
-            tick.exchange = Exchange.SSE # item[0][:2]
+            tick = TickData(self.gateway_name, item[0], Exchange.SSE, now)
             tick.vt_symbol = tick.symbol + "." + tick.exchange.value
             tick.date = item[1][30]
             tick.time = item[1][31]
-            tick.datetime = datetime.datetime.now()
             tick.open_price = float(item[1][1])
             tick.pre_close = float(item[1][2])
             tick.last_price = float(item[1][3])

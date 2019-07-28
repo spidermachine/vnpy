@@ -22,8 +22,11 @@ SETTINGS = {
     "email.sender": "",
     "email.receiver": "",
 
-    "sinaqq.interval": 15,
-
+    "sinaqq.interval": 30,
+    "hedge.etf": "sh510050",
+    "hedge.qqcode": "10001927",
+    "hedge.etfsize": 12000,
+    "hedge.qqcodesize": 2,
     "database.driver": "mysql",  # see database.Driver
     "database.database": "stock",  # for sqlite, use this as filepath
     "database.host": "192.168.68.128",
