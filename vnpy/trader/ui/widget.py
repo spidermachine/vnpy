@@ -373,16 +373,16 @@ class TickMonitor(BaseMonitor):
         if data.gateway_name == 'risk':
             return True
 
-        hedge = get_settings("hedge")
-        etf = hedge.get(".etf")
-        qqcode = hedge.get(".qqcode")
-
-        if data.symbol == etf:
-            return False
-
-        if data.symbol.endswith(qqcode):
-            return False
-        return True
+        # hedge = get_settings("hedge")
+        # etf = hedge.get(".etf")
+        # qqcode = hedge.get(".qqcode")
+        #
+        # if data.symbol == etf:
+        #     return False
+        #
+        # if data.symbol.endswith(qqcode):
+        #     return False
+        # return True
 
 class RiskMonitor(BaseMonitor):
     event_type = EVENT_TICK

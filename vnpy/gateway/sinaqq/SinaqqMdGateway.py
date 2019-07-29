@@ -40,7 +40,11 @@ class SinaqqMdGateway(BaseGateway):
             time.sleep(1)
 
     def get_tick_data(self):
-        data = sinaqq.get_op_price_batch(self.opCodes)
+        hedge = get_settings("hedge")
+        # etf = hedge.get(".etf")
+        # etfsize = hedge.get(".etfsize")
+        qqcode = hedge.get(".qqcode")
+        data = sinaqq.get_op_price_batch(['CON_OP_' + qqcode])
         vlist = list()
         now = datetime.datetime.now()
         for item in data:
