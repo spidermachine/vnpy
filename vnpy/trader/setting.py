@@ -24,7 +24,7 @@ SETTINGS = {
 
     "sinaqq.interval": 30,
     "hedge.etf": "sh510050",
-    "hedge.qqcode": "10001927",
+    "hedge.qqcode": "10001888",
     "hedge.etfsize": 12000,
     "hedge.qqcodesize": 2,
     "database.driver": "mysql",  # see database.Driver

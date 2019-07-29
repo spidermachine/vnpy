@@ -14,16 +14,16 @@ from .widget import (
     TickMonitor,
     RiskMonitor,
     HedgeLinesWidget,
-    OrderMonitor,
+    # OrderMonitor,
     TradeMonitor,
-    PositionMonitor,
-    AccountMonitor,
+    # PositionMonitor,
+    # AccountMonitor,
     LogMonitor,
-    ActiveOrderMonitor,
+    # ActiveOrderMonitor,
     ConnectDialog,
-    ContractManager,
+    # ContractManager,
     TradingWidget,
-    AboutDialog,
+    # AboutDialog,
     GlobalDialog
 )
 from ..engine import MainEngine
@@ -132,17 +132,17 @@ class MainWindow(QtWidgets.QMainWindow):
         # Help menu
         help_menu = bar.addMenu("帮助")
 
-        self.add_menu_action(
-            help_menu,
-            "查询合约",
-            "contract.ico",
-            partial(self.open_widget, ContractManager, "contract"),
-        )
-        self.add_toolbar_action(
-            "查询合约",
-            "contract.ico",
-            partial(self.open_widget, ContractManager, "contract")
-        )
+        # self.add_menu_action(
+        #     help_menu,
+        #     "查询合约",
+        #     "contract.ico",
+        #     partial(self.open_widget, ContractManager, "contract"),
+        # )
+        # self.add_toolbar_action(
+        #     "查询合约",
+        #     "contract.ico",
+        #     partial(self.open_widget, ContractManager, "contract")
+        # )
 
         self.add_menu_action(
             help_menu, "还原窗口", "restore.ico", self.restore_window_setting
@@ -159,12 +159,12 @@ class MainWindow(QtWidgets.QMainWindow):
             "社区论坛", "forum.ico", self.open_forum
         )
 
-        self.add_menu_action(
-            help_menu,
-            "关于",
-            "about.ico",
-            partial(self.open_widget, AboutDialog, "about"),
-        )
+        # self.add_menu_action(
+        #     help_menu,
+        #     "关于",
+        #     "about.ico",
+        #     partial(self.open_widget, AboutDialog, "about"),
+        # )
 
     def init_toolbar(self):
         """"""

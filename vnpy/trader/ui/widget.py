@@ -8,6 +8,7 @@ from typing import Any
 from copy import copy
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+import pyqtgraph as pg
 
 from vnpy.event import Event, EventEngine
 from ..constant import Direction, Exchange, Offset, OrderType
@@ -241,6 +242,9 @@ class BaseMonitor(QtWidgets.QTableWidget):
             self.signal.connect(self.process_event)
             self.event_engine.register(self.event_type, self.signal.emit)
 
+    def filter(self, data):
+        return False
+
     def process_event(self, event):
         """
         Process new data from event and update into table.
@@ -251,6 +255,9 @@ class BaseMonitor(QtWidgets.QTableWidget):
 
         # Update data into table.
         data = event.data
+
+        if self.filter(data):
+            return
 
         if not self.data_key:
             self.insert_new_row(data)
@@ -362,33 +369,20 @@ class TickMonitor(BaseMonitor):
         "gateway_name": {"display": "接口", "cell": BaseCell, "update": False},
     }
 
-    def process_event(self, event):
-        """
-        Process new data from event and update into table.
-        """
-        # Disable sorting to prevent unwanted error.
-        if self.sorting:
-            self.setSortingEnabled(False)
-
-        # Update data into table.
-        data = event.data
-
+    def filter(self, data):
         if data.gateway_name == 'risk':
-            return
+            return True
 
-        if not self.data_key:
-            self.insert_new_row(data)
-        else:
-            key = data.__getattribute__(self.data_key)
+        hedge = get_settings("hedge")
+        etf = hedge.get(".etf")
+        qqcode = hedge.get(".qqcode")
 
-            if key in self.cells:
-                self.update_old_row(data)
-            else:
-                self.insert_new_row(data)
+        if data.symbol == etf:
+            return False
 
-        # Enable sorting
-        if self.sorting:
-            self.setSortingEnabled(True)
+        if data.symbol.endswith(qqcode):
+            return False
+        return True
 
 class RiskMonitor(BaseMonitor):
     event_type = EVENT_TICK
@@ -414,33 +408,8 @@ class RiskMonitor(BaseMonitor):
         "gateway_name": {"display": "接口", "cell": BaseCell, "update": False},
     }
 
-    def process_event(self, event):
-        """
-        Process new data from event and update into table.
-        """
-        # Disable sorting to prevent unwanted error.
-        if self.sorting:
-            self.setSortingEnabled(False)
-
-        # Update data into table.
-        data = event.data
-
-        if data.gateway_name != 'risk':
-            return
-
-        if not self.data_key:
-            self.insert_new_row(data)
-        else:
-            key = data.__getattribute__(self.data_key)
-
-            if key in self.cells:
-                self.update_old_row(data)
-            else:
-                self.insert_new_row(data)
-
-        # Enable sorting
-        if self.sorting:
-            self.setSortingEnabled(True)
+    def filter(self, data):
+        return data.gateway_name != 'risk'
 
 class LogMonitor(BaseMonitor):
     """
@@ -481,86 +450,6 @@ class TradeMonitor(BaseMonitor):
     }
 
 
-class OrderMonitor(BaseMonitor):
-    """
-    Monitor for order data.
-    """
-
-    event_type = EVENT_ORDER
-    data_key = "vt_orderid"
-    sorting = True
-
-    headers = {
-        "orderid": {"display": "委托号", "cell": BaseCell, "update": False},
-        "symbol": {"display": "代码", "cell": BaseCell, "update": False},
-        "exchange": {"display": "交易所", "cell": EnumCell, "update": False},
-        "type": {"display": "类型", "cell": EnumCell, "update": False},
-        "direction": {"display": "方向", "cell": DirectionCell, "update": False},
-        "offset": {"display": "开平", "cell": EnumCell, "update": False},
-        "price": {"display": "价格", "cell": BaseCell, "update": False},
-        "volume": {"display": "总数量", "cell": BaseCell, "update": True},
-        "traded": {"display": "已成交", "cell": BaseCell, "update": True},
-        "status": {"display": "状态", "cell": EnumCell, "update": True},
-        "time": {"display": "时间", "cell": BaseCell, "update": True},
-        "gateway_name": {"display": "接口", "cell": BaseCell, "update": False},
-    }
-
-    def init_ui(self):
-        """
-        Connect signal.
-        """
-        super(OrderMonitor, self).init_ui()
-
-        self.setToolTip("双击单元格撤单")
-        self.itemDoubleClicked.connect(self.cancel_order)
-
-    def cancel_order(self, cell):
-        """
-        Cancel order if cell double clicked.
-        """
-        order = cell.get_data()
-        req = order.create_cancel_request()
-        self.main_engine.cancel_order(req, order.gateway_name)
-
-
-class PositionMonitor(BaseMonitor):
-    """
-    Monitor for position data.
-    """
-
-    event_type = EVENT_POSITION
-    data_key = "vt_positionid"
-    sorting = True
-
-    headers = {
-        "symbol": {"display": "代码", "cell": BaseCell, "update": False},
-        "exchange": {"display": "交易所", "cell": EnumCell, "update": False},
-        "direction": {"display": "方向", "cell": DirectionCell, "update": False},
-        "volume": {"display": "数量", "cell": BaseCell, "update": True},
-        "yd_volume": {"display": "昨仓", "cell": BaseCell, "update": True},
-        "frozen": {"display": "冻结", "cell": BaseCell, "update": True},
-        "price": {"display": "均价", "cell": BaseCell, "update": False},
-        "pnl": {"display": "盈亏", "cell": PnlCell, "update": True},
-        "gateway_name": {"display": "接口", "cell": BaseCell, "update": False},
-    }
-
-
-class AccountMonitor(BaseMonitor):
-    """
-    Monitor for account data.
-    """
-
-    event_type = EVENT_ACCOUNT
-    data_key = "vt_accountid"
-    sorting = True
-
-    headers = {
-        "accountid": {"display": "账号", "cell": BaseCell, "update": False},
-        "balance": {"display": "余额", "cell": BaseCell, "update": True},
-        "frozen": {"display": "冻结", "cell": BaseCell, "update": True},
-        "available": {"display": "可用", "cell": BaseCell, "update": True},
-        "gateway_name": {"display": "接口", "cell": BaseCell, "update": False},
-    }
 
 
 class ConnectDialog(QtWidgets.QDialog):
@@ -942,6 +831,34 @@ class TradingWidget(QtWidgets.QWidget):
             req = order.create_cancel_request()
             self.main_engine.cancel_order(req, order.gateway_name)
 
+class BacktesterChart(pg.GraphicsWindow):
+    """"""
+
+    def __init__(self):
+        """"""
+        super().__init__(title="当日对冲盈亏")
+
+        self.dates = {}
+
+        self.init_ui()
+
+    def init_ui(self):
+        """"""
+        pg.setConfigOptions(antialias=True)
+
+        # Create plot widgets
+        self.balance_plot = self.addPlot(
+            title="当日对冲盈亏曲线"
+            # axisItems={"bottom": DateAxis(self.dates, orientation="bottom")}
+        )
+
+        self.balance_curve = self.balance_plot.plot(
+            pen=pg.mkPen("#ffc107", width=3)
+        )
+
+    def setData(self, data):
+        self.balance_curve.setData(data)
+
 
 class HedgeLinesWidget(TradingWidget):
 
@@ -954,12 +871,12 @@ class HedgeLinesWidget(TradingWidget):
         super(HedgeLinesWidget, self).__init__(main_engine, event_engine)
 
     def init_ui(self):
-        import pyqtgraph as pg
-        plotWidget = pg.plot(title="对冲实时收益当天(相对昨天收盘)")
-        mainLayout = QtWidgets.QVBoxLayout()
-        mainLayout.addWidget(plotWidget, stretch=1)
-        self.line = plotWidget.getPlotItem().plot()
-        plotWidget.setCentralItem(self.line)
+
+        self.chart = BacktesterChart()
+        self.chart.setMinimumWidth(200)
+        hbox = QtWidgets.QHBoxLayout()
+        hbox.addWidget(self.chart)
+        self.setLayout(hbox)
         # plotWidget.setCentralWidget(self.line)
         # tick_data = event.data
         # if tick_data.gateway_name == 'sinaqq':
@@ -983,151 +900,11 @@ class HedgeLinesWidget(TradingWidget):
         if self.etf and self.qq:
             if self.etf.datetime.second == self.qq.datetime.second:
                 self.data.append(etfsize * (self.etf.last_price - self.etf.pre_close)
-                                 - qqcodesize * (self.qq.last_price - self.qq.pre_close))
-                self.line.setData(self.data)
+                                 - qqcodesize * (self.qq.last_price - self.qq.pre_close) * 10000)
+                self.chart.setData(self.data)
 
-class ActiveOrderMonitor(OrderMonitor):
-    """
-    Monitor which shows active order only.
-    """
-
-    def process_event(self, event):
-        """
-        Hides the row if order is not active.
-        """
-        super(ActiveOrderMonitor, self).process_event(event)
-
-        order = event.data
-        row_cells = self.cells[order.vt_orderid]
-        row = self.row(row_cells["volume"])
-
-        if order.is_active():
-            self.showRow(row)
-        else:
-            self.hideRow(row)
-
-
-class ContractManager(QtWidgets.QWidget):
-    """
-    Query contract data available to trade in system.
-    """
-
-    headers = {
-        "vt_symbol": "本地代码",
-        "symbol": "代码",
-        "exchange": "交易所",
-        "name": "名称",
-        "product": "合约分类",
-        "size": "合约乘数",
-        "pricetick": "价格跳动",
-        "min_volume": "最小委托量",
-        "gateway_name": "交易接口",
-    }
-
-    def __init__(self, main_engine, event_engine):
-        super(ContractManager, self).__init__()
-
-        self.main_engine = main_engine
-        self.event_engine = event_engine
-
-        self.init_ui()
-
-    def init_ui(self):
-        """"""
-        self.setWindowTitle("合约查询")
-        self.resize(1000, 600)
-
-        self.filter_line = QtWidgets.QLineEdit()
-        self.filter_line.setPlaceholderText("输入合约代码或者交易所，留空则查询所有合约")
-
-        self.button_show = QtWidgets.QPushButton("查询")
-        self.button_show.clicked.connect(self.show_contracts)
-
-        labels = []
-        for name, display in self.headers.items():
-            label = f"{display}\n{name}"
-            labels.append(label)
-
-        self.contract_table = QtWidgets.QTableWidget()
-        self.contract_table.setColumnCount(len(self.headers))
-        self.contract_table.setHorizontalHeaderLabels(labels)
-        self.contract_table.verticalHeader().setVisible(False)
-        self.contract_table.setEditTriggers(self.contract_table.NoEditTriggers)
-        self.contract_table.setAlternatingRowColors(True)
-
-        hbox = QtWidgets.QHBoxLayout()
-        hbox.addWidget(self.filter_line)
-        hbox.addWidget(self.button_show)
-
-        vbox = QtWidgets.QVBoxLayout()
-        vbox.addLayout(hbox)
-        vbox.addWidget(self.contract_table)
-
-        self.setLayout(vbox)
-
-    def show_contracts(self):
-        """
-        Show contracts by symbol
-        """
-        flt = str(self.filter_line.text())
-
-        all_contracts = self.main_engine.get_all_contracts()
-        if flt:
-            contracts = [
-                contract for contract in all_contracts if flt in contract.vt_symbol
-            ]
-        else:
-            contracts = all_contracts
-
-        self.contract_table.clearContents()
-        self.contract_table.setRowCount(len(contracts))
-
-        for row, contract in enumerate(contracts):
-            for column, name in enumerate(self.headers.keys()):
-                value = getattr(contract, name)
-                if isinstance(value, Enum):
-                    cell = EnumCell(value, contract)
-                else:
-                    cell = BaseCell(value, contract)
-                self.contract_table.setItem(row, column, cell)
-
-        self.contract_table.resizeColumnsToContents()
-
-
-class AboutDialog(QtWidgets.QDialog):
-    """
-    About VN Trader.
-    """
-
-    def __init__(self, main_engine: MainEngine, event_engine: EventEngine):
-        """"""
-        super(AboutDialog, self).__init__()
-
-        self.main_engine = main_engine
-        self.event_engine = event_engine
-
-        self.init_ui()
-
-    def init_ui(self):
-        """"""
-        self.setWindowTitle(f"关于VN Trader")
-
-        text = """
-            Developed by Traders, for Traders.
-            License：MIT
-            
-            Website：www.vnpy.com
-            Github：www.github.com/vnpy/vnpy
-
-            """
-
-        label = QtWidgets.QLabel()
-        label.setText(text)
-        label.setMinimumWidth(500)
-
-        vbox = QtWidgets.QVBoxLayout()
-        vbox.addWidget(label)
-        self.setLayout(vbox)
+                self.etf = None
+                self.qq = None
 
 
 class GlobalDialog(QtWidgets.QDialog):
