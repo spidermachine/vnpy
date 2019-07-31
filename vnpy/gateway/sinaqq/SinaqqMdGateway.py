@@ -35,9 +35,13 @@ class SinaqqMdGateway(BaseGateway):
         while self.isRunning:
             cur = datetime.datetime.now()
             if cur.second % interval == 0:
-                data = self.get_tick_data()
-                for item in data:
-                    self.on_tick(item)
+                try:
+                    data = self.get_tick_data()
+                    for item in data:
+                        self.on_tick(item)
+                except Exception as e:
+                    print(e)
+                    pass
             time.sleep(1)
 
     def get_tick_data(self):

@@ -242,6 +242,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def data_back(self):
 
+        self.trading_widget.reset_data()
         dialog = InputDialog(self.event_engine)
         dialog.exec_()
 

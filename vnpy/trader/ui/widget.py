@@ -907,6 +907,9 @@ class HedgeLinesWidget(TradingWidget):
                 self.etf = None
                 self.qq = None
 
+    def reset_data(self):
+        self.data.clear()
+
 import datetime
 
 class InputDialog(QtWidgets.QDialog):
@@ -918,7 +921,8 @@ class InputDialog(QtWidgets.QDialog):
         """"""
         super().__init__()
 
-        self.widget = None
+        self.start_widget = None
+        self.end_widget = None
         self.event_engine = event_engine
 
         self.init_ui()
@@ -932,9 +936,11 @@ class InputDialog(QtWidgets.QDialog):
         # Initialize line edits and form layout based on setting.
         form = QtWidgets.QFormLayout()
 
-        self.widget = QtWidgets.QLineEdit(str("2019-09-09"))
+        self.start_widget = QtWidgets.QDateEdit(QtCore.QDate.currentDate())
+        self.end_widget = QtWidgets.QDateEdit(QtCore.QDate.currentDate())
 
-        form.addRow(f"date: ", self.widget)
+        form.addRow(f"开始日期: ", self.start_widget)
+        form.addRow(f"结束日期: ", self.end_widget)
 
         button = QtWidgets.QPushButton("确定")
         button.clicked.connect(self.back_data)
@@ -943,21 +949,22 @@ class InputDialog(QtWidgets.QDialog):
 
     def back_data(self):
 
-        value_text = self.widget.text()
+        start_text = self.start_widget.text()
+        end_text = self.end_widget.text()
 
         import threading
-        threading.Thread(target=self.load_data, args=(value_text,)).start()
+        threading.Thread(target=self.load_data, args=(start_text, end_text)).start()
 
         self.accept()
 
-    def load_data(self, value):
+    def load_data(self, start, end):
         from vnpy.trader.database import database_manager
         hedge = get_settings("hedge")
         etf = hedge.get(".etf")
         # etfsize = hedge.get(".etfsize")
         qqcode = hedge.get(".qqcode")
-        current_date = datetime.datetime.strptime(value, '%Y-%m-%d')
-        end_date = current_date + datetime.timedelta(days=1)
+        current_date = datetime.datetime.strptime(start, '%Y/%m/%d')
+        end_date = datetime.datetime.strptime(end, '%Y/%m/%d')
         etf_data = database_manager.load_tick_data(etf, Exchange.SSE, current_date, end_date)
         qq_data = database_manager.load_tick_data("CON_OP_" + qqcode, Exchange.SHFE, current_date, end_date)
 
