@@ -16,10 +16,11 @@ from ..engine import MainEngine
 from ..event import (
     EVENT_TICK,
     EVENT_TRADE,
-    EVENT_ORDER,
-    EVENT_POSITION,
-    EVENT_ACCOUNT,
-    EVENT_LOG
+    EVENT_RISK
+    # EVENT_ORDER,
+    # EVENT_POSITION,
+    # EVENT_ACCOUNT,
+    # EVENT_LOG
 )
 from ..object import OrderRequest, SubscribeRequest
 from ..utility import load_json, save_json
@@ -369,9 +370,9 @@ class TickMonitor(BaseMonitor):
         "gateway_name": {"display": "接口", "cell": BaseCell, "update": False},
     }
 
-    def filter(self, data):
-        if data.gateway_name == 'risk':
-            return True
+    # def filter(self, data):
+    #     if data.gateway_name == 'risk':
+    #         return True
 
         # hedge = get_settings("hedge")
         # etf = hedge.get(".etf")
@@ -385,7 +386,7 @@ class TickMonitor(BaseMonitor):
         # return True
 
 class RiskMonitor(BaseMonitor):
-    event_type = EVENT_TICK
+    event_type = EVENT_RISK
     data_key = "vt_symbol"
     sorting = True
 
@@ -408,23 +409,23 @@ class RiskMonitor(BaseMonitor):
         "gateway_name": {"display": "接口", "cell": BaseCell, "update": False},
     }
 
-    def filter(self, data):
-        return data.gateway_name != 'risk'
+    # def filter(self, data):
+    #     return data.gateway_name != 'risk'
 
-class LogMonitor(BaseMonitor):
-    """
-    Monitor for log data.
-    """
-
-    event_type = EVENT_LOG
-    data_key = ""
-    sorting = False
-
-    headers = {
-        "time": {"display": "时间", "cell": TimeCell, "update": False},
-        "msg": {"display": "信息", "cell": MsgCell, "update": False},
-        "gateway_name": {"display": "接口", "cell": BaseCell, "update": False},
-    }
+# class LogMonitor(BaseMonitor):
+#     """
+#     Monitor for log data.
+#     """
+#
+#     event_type = EVENT_LOG
+#     data_key = ""
+#     sorting = False
+#
+#     headers = {
+#         "time": {"display": "时间", "cell": TimeCell, "update": False},
+#         "msg": {"display": "信息", "cell": MsgCell, "update": False},
+#         "gateway_name": {"display": "接口", "cell": BaseCell, "update": False},
+#     }
 
 
 class TradeMonitor(BaseMonitor):
@@ -906,6 +907,67 @@ class HedgeLinesWidget(TradingWidget):
                 self.etf = None
                 self.qq = None
 
+import datetime
+
+class InputDialog(QtWidgets.QDialog):
+    """
+    Start connection of a certain gateway.
+    """
+
+    def __init__(self, event_engine):
+        """"""
+        super().__init__()
+
+        self.widget = None
+        self.event_engine = event_engine
+
+        self.init_ui()
+
+    def init_ui(self):
+        """"""
+        self.setWindowTitle("数据回放日期")
+        self.setMinimumWidth(200)
+
+
+        # Initialize line edits and form layout based on setting.
+        form = QtWidgets.QFormLayout()
+
+        self.widget = QtWidgets.QLineEdit(str("2019-09-09"))
+
+        form.addRow(f"date: ", self.widget)
+
+        button = QtWidgets.QPushButton("确定")
+        button.clicked.connect(self.back_data)
+        form.addRow(button)
+        self.setLayout(form)
+
+    def back_data(self):
+
+        value_text = self.widget.text()
+
+        import threading
+        threading.Thread(target=self.load_data, args=(value_text,)).start()
+
+        self.accept()
+
+    def load_data(self, value):
+        from vnpy.trader.database import database_manager
+        hedge = get_settings("hedge")
+        etf = hedge.get(".etf")
+        # etfsize = hedge.get(".etfsize")
+        qqcode = hedge.get(".qqcode")
+        current_date = datetime.datetime.strptime(value, '%Y-%m-%d')
+        end_date = current_date + datetime.timedelta(days=1)
+        etf_data = database_manager.load_tick_data(etf, Exchange.SSE, current_date, end_date)
+        qq_data = database_manager.load_tick_data("CON_OP_" + qqcode, Exchange.SHFE, current_date, end_date)
+
+        etf_len = len(etf_data)
+        qq_len = len(qq_data)
+        for index in range(max(etf_len, qq_len)):
+            if index < etf_len:
+                self.event_engine.put(Event(EVENT_TICK, etf_data[index]))
+            if index < qq_len:
+                self.event_engine.put(Event(EVENT_TICK, qq_data[index]))
 
 class GlobalDialog(QtWidgets.QDialog):
     """

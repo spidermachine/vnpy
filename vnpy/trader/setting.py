@@ -15,13 +15,6 @@ SETTINGS = {
     "log.console": True,
     "log.file": True,
 
-    "email.server": "smtp.qq.com",
-    "email.port": 465,
-    "email.username": "",
-    "email.password": "",
-    "email.sender": "",
-    "email.receiver": "",
-
     "sinaqq.interval": 30,
     "hedge.etf": "sh510050",
     "hedge.qqcode": "10001888",
@@ -29,11 +22,10 @@ SETTINGS = {
     "hedge.qqcodesize": 2,
     "database.driver": "mysql",  # see database.Driver
     "database.database": "stock",  # for sqlite, use this as filepath
-    "database.host": "192.168.68.128",
+    "database.host": "192.168.52.128",
     "database.port": 3306,
     "database.user": "root",
     "database.password": "root",
-    "database.authentication_source": "admin",  # for mongodb
 }
 
 # Load global setting from json file.

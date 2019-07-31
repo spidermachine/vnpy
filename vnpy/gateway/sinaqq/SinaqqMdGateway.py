@@ -4,6 +4,7 @@ from vnpy.trader.object import TickData, OptionTick, RiskTick
 from vnpy.trader.constant import Exchange
 from vnpy.api.sina.qq import sinaqq
 from vnpy.api.sina.stock import sinastock
+from vnpy.trader.event import EVENT_RISK
 import datetime
 import threading
 import time
@@ -172,6 +173,13 @@ class SinaRiskGateway(SinaqqMdGateway):
             vlist.append(risk)
         return vlist
 
+    def on_tick(self, tick: TickData):
+        """
+        Tick event push.
+        Tick event of a specific vt_symbol is also pushed.
+        """
+        self.on_event(EVENT_RISK, tick)
+        self.on_event(EVENT_RISK + tick.vt_symbol, tick)
 
 class SinaStockGateway(SinaqqMdGateway):
     """
@@ -229,3 +237,4 @@ class SinaStockGateway(SinaqqMdGateway):
             tick.bid_price_5 = float(item[1][29])
             vlist.append(tick)
         return vlist
+

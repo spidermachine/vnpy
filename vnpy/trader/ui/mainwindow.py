@@ -18,13 +18,14 @@ from .widget import (
     TradeMonitor,
     # PositionMonitor,
     # AccountMonitor,
-    LogMonitor,
+    # LogMonitor,
     # ActiveOrderMonitor,
     ConnectDialog,
     # ContractManager,
     TradingWidget,
     # AboutDialog,
-    GlobalDialog
+    GlobalDialog,
+    InputDialog
 )
 from ..engine import MainEngine
 from ..utility import get_icon_path, TRADER_DIR
@@ -64,9 +65,9 @@ class MainWindow(QtWidgets.QMainWindow):
         tick_widget, tick_dock = self.create_dock(
             TickMonitor, "行情", QtCore.Qt.RightDockWidgetArea
         )
-        tick_widget, tick_dock = self.create_dock(
-            RiskMonitor, "风险", QtCore.Qt.RightDockWidgetArea
-        )
+        # tick_widget, tick_dock = self.create_dock(
+        #     RiskMonitor, "风险", QtCore.Qt.RightDockWidgetArea
+        # )
 
         # order_widget, order_dock = self.create_dock(
         #     OrderMonitor, "委托", QtCore.Qt.RightDockWidgetArea
@@ -109,7 +110,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # App menu
         app_menu = bar.addMenu("功能")
-
+        self.add_menu_action(app_menu, "数据回放", "connect.ico", self.data_back)
         all_apps = self.main_engine.get_all_apps()
         for app in all_apps:
             ui_module = import_module(app.app_module + ".ui")
@@ -127,7 +128,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # Global setting editor
         action = QtWidgets.QAction("配置", self)
         action.triggered.connect(self.edit_global_setting)
-        bar.addAction(action)
+        app_menu.addAction(action)
 
         # Help menu
         help_menu = bar.addMenu("帮助")
@@ -239,6 +240,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
         dialog.exec_()
 
+    def data_back(self):
+
+        dialog = InputDialog(self.event_engine)
+        dialog.exec_()
+
     def closeEvent(self, event):
         """
         Call main engine close function before exit.
@@ -250,6 +256,8 @@ class MainWindow(QtWidgets.QMainWindow):
             QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
             QtWidgets.QMessageBox.No,
         )
+
+
 
         if reply == QtWidgets.QMessageBox.Yes:
             for widget in self.widgets.values():

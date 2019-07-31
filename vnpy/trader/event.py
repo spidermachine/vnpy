@@ -5,6 +5,7 @@ Event type string used in VN Trader.
 from vnpy.event import EVENT_TIMER  # noqa
 
 EVENT_TICK = "eTick."
+EVENT_RISK = "eRisk."
 EVENT_TRADE = "eTrade."
 EVENT_ORDER = "eOrder."
 EVENT_POSITION = "ePosition."
