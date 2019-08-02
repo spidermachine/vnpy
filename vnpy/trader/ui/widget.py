@@ -6,6 +6,7 @@ import csv
 from enum import Enum
 from typing import Any
 from copy import copy
+import time
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 import pyqtgraph as pg
@@ -847,6 +848,12 @@ class BacktesterChart(pg.GraphicsWindow):
         """"""
         pg.setConfigOptions(antialias=True)
 
+        hedge = get_settings("hedge")
+        etf = hedge.get(".etf")
+        etfsize = hedge.get(".etfsize")
+        qqcode = hedge.get(".qqcode")
+        qqcodesize = hedge.get(".qqcodesize")
+
         # Create plot widgets
         self.balance_plot = self.addPlot(
             title="当日对冲盈亏曲线"
@@ -857,8 +864,27 @@ class BacktesterChart(pg.GraphicsWindow):
             pen=pg.mkPen("#ffc107", width=3)
         )
 
-    def setData(self, data):
+        self.balance_plot = self.addPlot(
+            title=etf + ":" + str(etfsize)
+            # axisItems={"bottom": DateAxis(self.dates, orientation="bottom")}
+        )
+
+        self.etf_curve = self.balance_plot.plot(pen=pg.mkPen("#FFFFFF", width=2))
+        self.balance_plot = self.addPlot(
+            title=qqcode + ":" + str(qqcodesize)
+            # axisItems={"bottom": DateAxis(self.dates, orientation="bottom")}
+        )
+
+        self.qq_curve = self.balance_plot.plot(pen=pg.mkPen("#FF0000", width=2))
+
+    def set_hudge_Data(self, data):
         self.balance_curve.setData(data)
+
+    def set_etf_data(self, data):
+        self.etf_curve.setData(data)
+
+    def set_qq_data(self, data):
+        self.qq_curve.setData(data)
 
 
 class HedgeLinesWidget(TradingWidget):
@@ -869,6 +895,8 @@ class HedgeLinesWidget(TradingWidget):
         self.qq = None
         self.line = None
         self.data = []
+        self.etf_data = []
+        self.qq_data = []
         super(HedgeLinesWidget, self).__init__(main_engine, event_engine)
 
     def init_ui(self):
@@ -899,16 +927,27 @@ class HedgeLinesWidget(TradingWidget):
             self.qq = ldata
 
         if self.etf and self.qq:
-            if self.etf.datetime.second == self.qq.datetime.second:
+            if self.process_now(self.etf.datetime) == self.process_now(self.qq.datetime.second):
+                self.etf_data.append(self.etf.last_price * 100)
+                self.qq_data.append(self.qq.last_price * 10000)
                 self.data.append(etfsize * (self.etf.last_price - self.etf.pre_close)
                                  - qqcodesize * (self.qq.last_price - self.qq.pre_close) * 10000)
-                self.chart.setData(self.data)
+                self.chart.set_hudge_Data(self.data)
+                self.chart.set_etf_data(self.etf_data)
+                self.chart.set_qq_data(self.qq_data)
 
                 self.etf = None
                 self.qq = None
 
+    def process_now(self, now):
+        if str(now.second).endswith("1"):
+            return now - datetime.timedelta(seconds=1)
+        return now
+
     def reset_data(self):
         self.data.clear()
+        self.etf_data.clear()
+        self.qq_data.clear()
 
 import datetime
 
@@ -923,6 +962,7 @@ class InputDialog(QtWidgets.QDialog):
 
         self.start_widget = None
         self.end_widget = None
+        self.interval_widget = None
         self.event_engine = event_engine
 
         self.init_ui()
@@ -938,9 +978,11 @@ class InputDialog(QtWidgets.QDialog):
 
         self.start_widget = QtWidgets.QDateEdit(QtCore.QDate.currentDate())
         self.end_widget = QtWidgets.QDateEdit(QtCore.QDate.currentDate())
+        self.interval_widget = QtWidgets.QLineEdit("0")
 
         form.addRow(f"开始日期: ", self.start_widget)
         form.addRow(f"结束日期: ", self.end_widget)
+        form.addRow(f"间隔: ", self.interval_widget)
 
         button = QtWidgets.QPushButton("确定")
         button.clicked.connect(self.back_data)
@@ -951,13 +993,14 @@ class InputDialog(QtWidgets.QDialog):
 
         start_text = self.start_widget.text()
         end_text = self.end_widget.text()
+        interval = int(self.interval_widget.text())
 
         import threading
-        threading.Thread(target=self.load_data, args=(start_text, end_text)).start()
+        threading.Thread(target=self.load_data, args=(start_text, end_text, interval)).start()
 
         self.accept()
 
-    def load_data(self, start, end):
+    def load_data(self, start, end, interval):
         from vnpy.trader.database import database_manager
         hedge = get_settings("hedge")
         etf = hedge.get(".etf")
@@ -971,6 +1014,8 @@ class InputDialog(QtWidgets.QDialog):
         etf_len = len(etf_data)
         qq_len = len(qq_data)
         for index in range(max(etf_len, qq_len)):
+            if interval != 0:
+                time.sleep(interval)
             if index < etf_len:
                 self.event_engine.put(Event(EVENT_TICK, etf_data[index]))
             if index < qq_len:

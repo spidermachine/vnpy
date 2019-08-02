@@ -153,12 +153,12 @@ class MainWindow(QtWidgets.QMainWindow):
             help_menu, "测试邮件", "email.ico", self.send_test_email
         )
 
-        self.add_menu_action(
-            help_menu, "社区论坛", "forum.ico", self.open_forum
-        )
-        self.add_toolbar_action(
-            "社区论坛", "forum.ico", self.open_forum
-        )
+        # self.add_menu_action(
+        #     help_menu, "社区论坛", "forum.ico", self.open_forum
+        # )
+        # self.add_toolbar_action(
+        #     "社区论坛", "forum.ico", self.open_forum
+        # )
 
         # self.add_menu_action(
         #     help_menu,

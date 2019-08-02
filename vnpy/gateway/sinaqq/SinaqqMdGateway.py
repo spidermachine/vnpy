@@ -52,6 +52,8 @@ class SinaqqMdGateway(BaseGateway):
         data = sinaqq.get_op_price_batch(['CON_OP_' + qqcode])
         vlist = list()
         now = datetime.datetime.now()
+        if str(now.second).endswith("1"):
+            now = now - datetime.timedelta(seconds=1)
         for item in data:
             tick = OptionTick()
             tick.symbol = item[0]
@@ -154,6 +156,8 @@ class SinaRiskGateway(SinaqqMdGateway):
         data = sinaqq.get_op_greek_alphabet_batch(['CON_OP_' + qqcode])
         vlist = list()
         now = datetime.datetime.now()
+        if str(now.second).endswith("1"):
+            now = now - datetime.timedelta(seconds=1)
         for item in data:
             risk = RiskTick(self.gateway_name, item[0], Exchange.SHFE, now)
             risk.gateway_name = self.gateway_name
@@ -206,6 +210,8 @@ class SinaStockGateway(SinaqqMdGateway):
         data = sinastock.get_stock_price(self.opCodes)
         vlist = list()
         now = datetime.datetime.now()
+        if str(now.second).endswith("1"):
+            now = now - datetime.timedelta(seconds=1)
         for item in data:
             tick = TickData(self.gateway_name, item[0], Exchange.SSE, now)
             tick.vt_symbol = tick.symbol + "." + tick.exchange.value
