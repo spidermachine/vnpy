@@ -927,7 +927,7 @@ class HedgeLinesWidget(TradingWidget):
             self.qq = ldata
 
         if self.etf and self.qq:
-            if self.process_now(self.etf.datetime) == self.process_now(self.qq.datetime.second):
+            if self.process_now(self.etf.datetime) == self.process_now(self.qq.datetime):
                 self.etf_data.append(self.etf.last_price * 100)
                 self.qq_data.append(self.qq.last_price * 10000)
                 self.data.append(etfsize * (self.etf.last_price - self.etf.pre_close)
