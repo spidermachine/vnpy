@@ -861,7 +861,7 @@ class BacktesterChart(pg.GraphicsWindow):
         )
 
         self.balance_curve = self.balance_plot.plot(
-            pen=pg.mkPen("#ffc107", width=3)
+            pen=pg.mkPen("#ffc107", width=1)
         )
 
         self.balance_plot = self.addPlot(
@@ -869,13 +869,13 @@ class BacktesterChart(pg.GraphicsWindow):
             # axisItems={"bottom": DateAxis(self.dates, orientation="bottom")}
         )
 
-        self.etf_curve = self.balance_plot.plot(pen=pg.mkPen("#FFFFFF", width=2))
+        self.etf_curve = self.balance_plot.plot(pen=pg.mkPen("#FFFFFF", width=1))
         self.balance_plot = self.addPlot(
             title=qqcode + ":" + str(qqcodesize)
             # axisItems={"bottom": DateAxis(self.dates, orientation="bottom")}
         )
 
-        self.qq_curve = self.balance_plot.plot(pen=pg.mkPen("#FF0000", width=2))
+        self.qq_curve = self.balance_plot.plot(pen=pg.mkPen("#FF0000", width=1))
 
     def set_hudge_Data(self, data):
         self.balance_curve.setData(data)
