@@ -942,7 +942,7 @@ class HedgeLinesWidget(TradingWidget):
     def process_now(self, now):
         if str(now.second).endswith("1"):
             return now - datetime.timedelta(seconds=1)
-        return now
+        return now.replace(microsecond=0)
 
     def reset_data(self):
         self.data.clear()
