@@ -20,6 +20,11 @@ SETTINGS = {
     "hedge.qqcode": "10001888",
     "hedge.etfsize": 12000,
     "hedge.qqcodesize": 2,
+    "hedge.exe_price":3.0,
+    "hedge.remain":18,
+    "hedge.v": 0.02,
+    "hedge.start":-40.0,
+    "hedge.stop":40.0,
     "database.driver": "mysql",  # see database.Driver
     "database.database": "stock",  # for sqlite, use this as filepath
     "database.host": "192.168.52.128",

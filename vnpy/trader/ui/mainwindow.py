@@ -12,18 +12,9 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from vnpy.event import EventEngine
 from .widget import (
     TickMonitor,
-    RiskMonitor,
     HedgeLinesWidget,
-    # OrderMonitor,
-    TradeMonitor,
-    # PositionMonitor,
-    # AccountMonitor,
-    # LogMonitor,
-    # ActiveOrderMonitor,
+    # PredictionWidget,
     ConnectDialog,
-    # ContractManager,
-    TradingWidget,
-    # AboutDialog,
     GlobalDialog,
     InputDialog
 )
@@ -65,6 +56,11 @@ class MainWindow(QtWidgets.QMainWindow):
         tick_widget, tick_dock = self.create_dock(
             TickMonitor, "行情", QtCore.Qt.RightDockWidgetArea
         )
+
+        # tick_widget, tick_dock = self.create_dock(
+        #     PredictionWidget, "概率分布", QtCore.Qt.BottomDockWidgetArea
+        # )
+
         # tick_widget, tick_dock = self.create_dock(
         #     RiskMonitor, "风险", QtCore.Qt.RightDockWidgetArea
         # )

@@ -101,33 +101,27 @@ class BarData(BaseData):
 
 @dataclass
 class OptionTick(TickData):
-
-    def __init__(self):
-        # super(OptionTick, self).__init__()
-
-        self.buy_price = 0.0
-        self.buy_volume = 0
-        self.sell_price = 0.0
-        self.sell_polume = 0
-        self.amp = 0.0
-        self.exe_price = 0.0
-        self.under = ''
-        self.name = ''
-        self.rise = 0.0
+    buy_price = 0.0
+    buy_volume = 0
+    sell_price = 0.0
+    sell_polume = 0
+    amp = 0.0
+    exe_price = 0.0
+    under = ''
+    rise = 0.0
 
 
 @dataclass
 class RiskTick(TickData):
 
-    def __int__(self):
-        self.name = ''
-        self.delta = 0.0
-        self.gamma = 0.0
-        self.theta = 0.0
-        self.vega = 0.0
-        self.hide_wave = 0.0
-        self.theory = 0.0
-        self.exe_price = 0.0
+    name = ''
+    delta = 0.0
+    gamma = 0.0
+    theta = 0.0
+    vega = 0.0
+    hide_wave = 0.0
+    theory = 0.0
+    exe_price = 0.0
 
 @dataclass
 class OrderData(BaseData):

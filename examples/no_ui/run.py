@@ -7,7 +7,7 @@ from vnpy.event import EventEngine
 from vnpy.trader.setting import SETTINGS
 from vnpy.trader.engine import MainEngine
 from vnpy.app.data_recorder import DataRecorderApp
-
+from .strategy import hudge
 from vnpy.gateway.sinaqq.SinaqqMdGateway import SinaStockGateway, SinaqqMdGateway, SinaRiskGateway
 
 
@@ -42,9 +42,13 @@ def run_child():
     cta_engine = main_engine.add_app(DataRecorderApp)
     main_engine.write_log("主引擎创建成功")
 
+
+
     # log_engine = main_engine.get_engine("log")
     # event_engine.register(EVENT_CTA_LOG, log_engine.process_log_event)
     # main_engine.write_log("注册日志事件监听")
+
+    hudges = hudge(main_engine, event_engine)
 
     main_engine.connect(SETTINGS, "sinaqq")
     main_engine.connect(SETTINGS, "risk")
@@ -75,10 +79,10 @@ def run_parent():
 
     # Chinese futures market trading period (day/night)
     DAY_START = time(9, 30)
-    DAY_END = time(15, 1)
+    DAY_END = time(11, 31)
 
-    # NIGHT_START = time(20, 45)
-    # NIGHT_END = time(2, 45)
+    NIGHT_START = time(13,00)
+    NIGHT_END = time(15, 1)
 
     child_process = None
 
@@ -88,7 +92,8 @@ def run_parent():
 
         # Check whether in trading period
         if (
-            (current_time >= DAY_START and current_time <= DAY_END)
+            (current_time >= DAY_START and current_time <= DAY_END) or
+                (current_time >= NIGHT_START and current_time <= NIGHT_END)
         ):
             trading = True
 

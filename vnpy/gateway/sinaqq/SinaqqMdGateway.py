@@ -55,7 +55,7 @@ class SinaqqMdGateway(BaseGateway):
         if str(now.second).endswith("1"):
             now = now - datetime.timedelta(seconds=1)
         for item in data:
-            tick = OptionTick()
+            tick = OptionTick(self.gateway_name, item[0], Exchange.SHFE, now)
             tick.symbol = item[0]
             tick.gateway_name = self.gateway_name
             tick.exchange = Exchange.SHFE

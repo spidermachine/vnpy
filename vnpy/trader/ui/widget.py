@@ -18,15 +18,11 @@ from ..event import (
     EVENT_TICK,
     EVENT_TRADE,
     EVENT_RISK
-    # EVENT_ORDER,
-    # EVENT_POSITION,
-    # EVENT_ACCOUNT,
-    # EVENT_LOG
 )
 from ..object import OrderRequest, SubscribeRequest
 from ..utility import load_json, save_json
 from ..setting import SETTING_FILENAME, SETTINGS, get_settings
-
+from vnpy.pricing import bs
 
 COLOR_LONG = QtGui.QColor("red")
 COLOR_SHORT = QtGui.QColor("green")
@@ -833,6 +829,38 @@ class TradingWidget(QtWidgets.QWidget):
             req = order.create_cancel_request()
             self.main_engine.cancel_order(req, order.gateway_name)
 
+class PredictionChart(pg.GraphicsWindow):
+
+    def __init__(self):
+
+        super(PredictionChart, self).__init__(title="基于昨日收盘价格预测模型")
+
+        hedge = get_settings("hedge")
+        self.etf = hedge.get(".etf")
+        self.etfsize = hedge.get(".etfsize")
+        self.qqcode = hedge.get(".qqcode")
+        self.qqcodesize = hedge.get(".qqcodesize")
+        self.datetime = None
+
+        self.init_ui()
+
+    def init_ui(self):
+
+        pg.setConfigOptions(antialias=True)
+
+        self.balance_plot = self.addPlot(
+            title="基于昨日收盘价格预测模型"
+            # axisItems={"bottom": DateAxis(self.dates, orientation="bottom")}
+        )
+
+        self.balance_curve = self.balance_plot.plot(
+            pen=pg.mkPen("#ffc107", width=1)
+        )
+
+    def set_data(self, x, y):
+        self.balance_curve.setData(x, y)
+
+
 class BacktesterChart(pg.GraphicsWindow):
     """"""
 
@@ -928,8 +956,8 @@ class HedgeLinesWidget(TradingWidget):
 
         if self.etf and self.qq:
             if self.process_now(self.etf.datetime) == self.process_now(self.qq.datetime):
-                self.etf_data.append(self.etf.last_price * 100)
-                self.qq_data.append(self.qq.last_price * 10000)
+                self.etf_data.append(self.etf.last_price)
+                self.qq_data.append(self.qq.last_price)
                 self.data.append(etfsize * (self.etf.last_price - self.etf.pre_close)
                                  - qqcodesize * (self.qq.last_price - self.qq.pre_close) * 10000)
                 self.chart.set_hudge_Data(self.data)
@@ -948,6 +976,55 @@ class HedgeLinesWidget(TradingWidget):
         self.data.clear()
         self.etf_data.clear()
         self.qq_data.clear()
+
+class PredictionWidget(TradingWidget):
+
+    def __init__(self, main_engine: MainEngine, event_engine: EventEngine):
+        super(PredictionWidget, self).__init__(main_engine, event_engine)
+
+        self.chart = PredictionChart()
+        self.chart.setMinimumWidth(200)
+        hbox = QtWidgets.QHBoxLayout()
+        hbox.addWidget(self.chart)
+        self.setLayout(hbox)
+        self.now = None
+
+    def init_ui(self):
+        pass
+
+    def process_tick_event(self, event: Event):
+        ldata = event.data
+        if not self.same(self.now, ldata.datetime):
+            self.now = ldata.datetime
+            from vnpy.trader.database import database_manager
+            hedge = get_settings("hedge")
+            start_date = ldata.datetime - datetime.timedelta(days=1)
+            end_date = start_date + datetime.timedelta(hours=8)
+            etf_data = database_manager.load_tick_data(hedge.get(".etf"), Exchange.SSE, start_date, end_date)
+            qq_data = database_manager.load_tick_data("CON_OP_" + hedge.get(".qqcode"), Exchange.SHFE, start_date, end_date)
+            etf_price = etf_data[-1].last_price
+            qq_price = qq_data[-1].last_price
+
+
+            exe_price = hedge.get(".exe_price")
+            remain = hedge.get(".remain")
+            v = hedge.get(".v")
+            etfsize = hedge.get(".etfsize")
+            qqcodesize = hedge.get(".qqcodesize")
+            x = [etf_price *(1 + 0.001 * index) for index in range(-30, 31)]
+            y = [bs.calculatePrice(etf_price_p, exe_price, 0.04, remain/240,v, 1) for etf_price_p in x]
+
+            balance = []
+            for x_index in range(len(x)):
+                balance.append(etfsize * (x[x_index] - etf_price) - qqcodesize * (y[x_index] - qq_price) * 10000)
+            self.chart.set_data(x, balance)
+
+
+    def same(self, now, tick_now):
+        if not now or not tick_now:
+            return False
+        return now.replace(hour=0, minute=0, second=0,microsecond=0) == tick_now.replace(hour=0, minute=0, second=0,microsecond=0)
+
 
 import datetime
 

@@ -5,6 +5,7 @@ from vnpy.trader.engine import MainEngine
 from vnpy.trader.ui import MainWindow, create_qapp
 from vnpy.gateway.sinaqq.SinaqqMdGateway import SinaqqMdGateway, SinaRiskGateway, SinaStockGateway
 # from vnpy.app.data_recorder import DataRecorderApp
+from examples.no_ui.strategy import hudge
 
 def main():
     """"""
@@ -18,6 +19,8 @@ def main():
     main_engine.add_gateway(SinaRiskGateway)
     main_engine.add_gateway(SinaStockGateway)
     # main_engine.add_app(DataRecorderApp)
+
+    hudges = hudge(main_engine, event_engine)
 
     main_window = MainWindow(main_engine, event_engine)
     main_window.showMaximized()
