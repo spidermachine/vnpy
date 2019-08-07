@@ -7,7 +7,7 @@ from vnpy.event import EventEngine
 from vnpy.trader.setting import SETTINGS
 from vnpy.trader.engine import MainEngine
 from vnpy.app.data_recorder import DataRecorderApp
-from .strategy import hudge
+from examples.no_ui.strategy import hudge
 from vnpy.gateway.sinaqq.SinaqqMdGateway import SinaStockGateway, SinaqqMdGateway, SinaRiskGateway
 
 

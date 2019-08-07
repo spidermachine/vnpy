@@ -5,8 +5,8 @@ import requests
 import datetime
 from vnpy.trader.event import (
     EVENT_TICK,
-    EVENT_TRADE,
-    EVENT_RISK
+    # EVENT_TRADE,
+    # EVENT_RISK
     # EVENT_ORDER,
     # EVENT_POSITION,
     # EVENT_ACCOUNT,
