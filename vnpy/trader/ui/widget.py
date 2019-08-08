@@ -1139,7 +1139,6 @@ class GlobalDialog(QtWidgets.QDialog):
         """
         Get setting value from line edits and update global setting file.
         """
-        settings = {}
         for field_name, tp in self.widgets.items():
             widget, field_type = tp
             value_text = widget.text()
@@ -1152,7 +1151,7 @@ class GlobalDialog(QtWidgets.QDialog):
             else:
                 field_value = field_type(value_text)
 
-            settings[field_name] = field_value
+            SETTINGS[field_name] = field_value
 
         QtWidgets.QMessageBox.information(
             self,
@@ -1161,6 +1160,6 @@ class GlobalDialog(QtWidgets.QDialog):
             QtWidgets.QMessageBox.Ok
         )
 
-        save_json(SETTING_FILENAME, settings)
+        save_json(SETTING_FILENAME, SETTINGS)
         self.accept()
 
