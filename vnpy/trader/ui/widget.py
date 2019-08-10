@@ -925,6 +925,7 @@ class HedgeLinesWidget(TradingWidget):
         self.data = []
         self.etf_data = []
         self.qq_data = []
+        self.data_unity = {}
         super(HedgeLinesWidget, self).__init__(main_engine, event_engine)
 
     def init_ui(self):
@@ -949,33 +950,37 @@ class HedgeLinesWidget(TradingWidget):
         etfsize = hedge.get(".etfsize")
         qqcode = hedge.get(".qqcode")
         qqcodesize = hedge.get(".qqcodesize")
+
+        str_now = self.process_now(ldata.datetime)
+        llist = self.data_unity.get(str_now)
+        if llist is None:
+            llist = []
+            self.data_unity[str_now] = llist
         if ldata.symbol == etf:
-            self.etf = ldata
+            llist.insert(1, ldata)
+            self.etf_data.append(ldata.last_price)
         elif ldata.symbol.endswith(qqcode):
-            self.qq = ldata
+            llist.insert(0, ldata)
+            self.qq_data.append(ldata.last_price)
 
-        if self.etf and self.qq:
-            if self.process_now(self.etf.datetime) == self.process_now(self.qq.datetime):
-                self.etf_data.append(self.etf.last_price)
-                self.qq_data.append(self.qq.last_price)
-                self.data.append(etfsize * (self.etf.last_price - self.etf.pre_close)
-                                 - qqcodesize * (self.qq.last_price - self.qq.pre_close) * 10000)
-                self.chart.set_hudge_Data(self.data)
-                self.chart.set_etf_data(self.etf_data)
-                self.chart.set_qq_data(self.qq_data)
-
-                self.etf = None
-                self.qq = None
+        if len(llist) == 2:
+            self.data.append(etfsize * (llist[1].last_price - llist[1].pre_close)
+                             - qqcodesize * (llist[0].last_price - llist[0].pre_close) * 10000)
+            self.chart.set_hudge_Data(self.data)
+            self.chart.set_etf_data(self.etf_data)
+            self.chart.set_qq_data(self.qq_data)
 
     def process_now(self, now):
         if str(now.second).endswith("1"):
-            return now - datetime.timedelta(seconds=1)
-        return now.replace(microsecond=0)
+            lnow = now - datetime.timedelta(seconds=1)
+            return lnow.strftime('%Y%m%d%H%M%S')
+        return now.strftime('%Y%m%d%H%M%S')
 
     def reset_data(self):
         self.data.clear()
         self.etf_data.clear()
         self.qq_data.clear()
+        self.data_unity.clear()
 
 class PredictionWidget(TradingWidget):
 

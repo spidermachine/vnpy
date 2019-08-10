@@ -20,7 +20,7 @@ def main():
     main_engine.add_gateway(SinaStockGateway)
     # main_engine.add_app(DataRecorderApp)
 
-    hudges = hudge(main_engine, event_engine)
+    # hudges = hudge(main_engine, event_engine)
 
     main_window = MainWindow(main_engine, event_engine)
     main_window.showMaximized()
